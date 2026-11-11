@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<h1>Prediction history</h1>
+<p class="sub">Last {{ rows|length }} checked transactions (stored in SQLite).</p>
+<section class="card">
+  {% if rows %}
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>Time</th><th>Amount</th><th>Category</th><th>Hour</th><th>Card present</th><th>Intl</th><th>Probability</th><th>Verdict</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td>{{ r.id }}</td><td>{{ r.created }}</td><td>{{ r.input.amount }}</td>
+        <td>{{ r.input.merchant_category.replace('_',' ') }}</td><td>{{ r.input.hour }}</td>
+        <td>{{ 'Yes' if r.input.card_present else 'No' }}</td><td>{{ 'Yes' if r.input.international else 'No' }}</td>
+        <td>{{ "%.1f"|format(r.probability*100) }}%</td>
+        <td><span class="tag {{ 'bad' if r.verdict=='FRAUD' else 'good' }}">{{ r.verdict }}</span></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <form method="post" action="{{ url_for('clear_history') }}" class="right"><button class="btn ghost">Clear history</button></form>
+  {% else %}
+  <div class="empty">No predictions yet. <a href="{{ url_for('predict') }}">Check a transaction →</a></div>
+  {% endif %}
+</section>
+{% endblock %}

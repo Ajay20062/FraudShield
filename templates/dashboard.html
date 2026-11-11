@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Model dashboard</h1>
+<p class="sub">Synthetic dataset of {{ "{:,}".format(info.dataset.rows) }} transactions · {{ "%.1f"|format(info.dataset.fraud_rate) }}% fraud · {{ "{:,}".format(info.dataset.train) }} train / {{ "{:,}".format(info.dataset.test) }} test (stratified).</p>
+
+{% set best = info.results.items() | sort(attribute='1.roc_auc', reverse=True) | first %}
+<section class="kpis">
+  <div class="kpi"><span>Transactions</span><b>{{ "{:,}".format(info.dataset.rows) }}</b></div>
+  <div class="kpi"><span>Fraud cases</span><b>{{ "{:,}".format(info.dataset.fraud) }}</b></div>
+  <div class="kpi"><span>Best ROC-AUC</span><b>{{ "%.3f"|format(best[1].roc_auc) }}</b><em>{{ best[0] }}</em></div>
+  <div class="kpi"><span>Voting recall</span><b>{{ "%.1f"|format(info.results['Voting Classifier'].recall*100) }}%</b><em>fraud caught</em></div>
+</section>
+
+<section class="card">
+  <h2>Model comparison (test set)</h2>
+  <table>
+    <thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>ROC-AUC</th></tr></thead>
+    <tbody>
+    {% for name, m in info.results.items() %}
+      <tr><td><b>{{ name }}</b></td>
+        <td>{{ "%.3f"|format(m.accuracy) }}</td><td>{{ "%.3f"|format(m.precision) }}</td>
+        <td>{{ "%.3f"|format(m.recall) }}</td><td>{{ "%.3f"|format(m.f1) }}</td><td>{{ "%.3f"|format(m.roc_auc) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<div class="grid2">
+  <section class="card"><h2>Metrics by model</h2><canvas id="cMetrics"></canvas></section>
+  <section class="card"><h2>ROC curves</h2><canvas id="cRoc"></canvas></section>
+  <section class="card"><h2>Fraud rate by hour of day (%)</h2><canvas id="cHour"></canvas></section>
+  <section class="card"><h2>Fraud rate by merchant category (%)</h2><canvas id="cCat"></canvas></section>
+  <section class="card"><h2>Feature importance (Random Forest)</h2><canvas id="cImp"></canvas></section>
+  <section class="card"><h2>BMA model weights</h2><canvas id="cBma"></canvas></section>
+</div>
+
+<section class="card">
+  <h2>Confusion matrix</h2>
+  <label>Model
+    <select id="cmSel">{% for name in info.results %}<option>{{ name }}</option>{% endfor %}</select>
+  </label>
+  <div id="cm" class="cm"></div>
+</section>
+
+<form method="post" action="{{ url_for('retrain') }}" class="right">
+  <button class="btn ghost" onclick="this.textContent='Training…'">Retrain models</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+<script>window.INFO = {{ info | tojson }};</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

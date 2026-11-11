@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Predict{% endblock %}
+{% block content %}
+<h1>Check a transaction</h1>
+<p class="sub">Enter transaction details. Every model scores it; the soft-voting ensemble makes the final call.</p>
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+<div class="grid2 top">
+  <form method="post" class="card form" id="pf">
+    <div class="presets">
+      <span>Quick fill:</span>
+      <button type="button" class="chip" data-p="normal">Normal purchase</button>
+      <button type="button" class="chip" data-p="fraud">Suspicious</button>
+    </div>
+    <label>Amount (₹ / $)<input name="amount" type="number" step="0.01" min="0.01" required value="{{ row.amount if row else 45 }}"></label>
+    <label>Customer's 30-day average<input name="avg_amount_30d" type="number" step="0.01" min="0.01" required value="{{ row.avg_amount_30d if row else 50 }}"></label>
+    <label>Merchant category
+      <select name="merchant_category">{% for c in categories %}<option value="{{ c }}" {{ 'selected' if row and row.merchant_category==c }}>{{ c.replace('_',' ').title() }}</option>{% endfor %}</select>
+    </label>
+    <div class="two">
+      <label>Hour (0-23)<input name="hour" type="number" min="0" max="23" required value="{{ row.hour if row else 14 }}"></label>
+      <label>Day of week
+        <select name="day_of_week">{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<option value="{{ loop.index0 }}" {{ 'selected' if row and row.day_of_week==loop.index0 }}>{{ d }}</option>{% endfor %}</select>
+      </label>
+    </div>
+    <div class="two">
+      <label>Distance from home (km)<input name="distance_from_home_km" type="number" step="0.1" min="0" required value="{{ row.distance_from_home_km if row else 5 }}"></label>
+      <label>Distance from last txn (km)<input name="distance_from_last_txn_km" type="number" step="0.1" min="0" required value="{{ row.distance_from_last_txn_km if row else 3 }}"></label>
+    </div>
+    <label>Transactions in last 24h<input name="txn_count_24h" type="number" min="0" required value="{{ row.txn_count_24h if row else 2 }}"></label>
+    <div class="two">
+      <label>Card present?
+        <select name="card_present"><option value="1" {{ 'selected' if not row or row.card_present==1 }}>Yes</option><option value="0" {{ 'selected' if row and row.card_present==0 }}>No (online / phone)</option></select>
+      </label>
+      <label>International?
+        <select name="international"><option value="0" {{ 'selected' if not row or row.international==0 }}>No</option><option value="1" {{ 'selected' if row and row.international==1 }}>Yes</option></select>
+      </label>
+    </div>
+    <button class="btn">Analyse transaction</button>
+  </form>
+
+  <section class="card result">
+    {% if result %}
+      <div class="verdict {{ 'bad' if result.is_fraud else 'good' }}">
+        <span>{{ 'Likely FRAUD' if result.is_fraud else 'Looks LEGITIMATE' }}</span>
+        <b>{{ "%.1f"|format(result.final_probability*100) }}%</b>
+        <em>fraud probability · {{ result.risk }} risk · {{ result.models_voting_fraud }}/4 models flag it</em>
+      </div>
+      <h3>Per-model fraud probability</h3>
+      {% for name, p in result.probabilities.items() %}
+        <div class="bar"><span>{{ name }}</span>
+          <div><i style="width: {{ (p*100)|round(1) }}%" class="{{ 'bad' if p>=0.5 else 'good' }}"></i></div>
+          <u>{{ "%.1f"|format(p*100) }}%</u></div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">Results appear here.<br><small>Try the “Suspicious” preset to see the models disagree and the ensemble decide.</small></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/predict.js') }}"></script>{% endblock %}

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FraudShield{% endblock %} · Ensemble Fraud Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="nav">
+    <div class="brand"><span class="dot"></span>FraudShield <small>Ensemble Learning</small></div>
+    <nav>
+      <a href="{{ url_for('dashboard') }}" class="{{ 'on' if page=='dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('predict') }}" class="{{ 'on' if page=='predict' }}">Predict</a>
+      <a href="{{ url_for('history') }}" class="{{ 'on' if page=='history' }}">History</a>
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Credit Card Fraud Detection using Ensemble Learning · CART · Random Forest · AdaBoost · Gradient Boosting · Voting</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

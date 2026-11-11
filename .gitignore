@@ -1,0 +1,11 @@
+﻿venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.history/
+history.db
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
